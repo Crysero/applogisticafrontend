@@ -1,13 +1,20 @@
 'use client';
 
-import React, { useEffect, useRef, useState } from 'react';
-import { io, Socket } from 'socket.io-client';
-import { v4 as uuidv4 } from 'uuid';
+import { useState, useEffect, useRef } from "react";
+import { io, Socket } from "socket.io-client";
+import { v4 as uuidv4 } from "uuid";
+
 
 // =============================
 // 🔧 CONFIGURAÇÃO DO BACKEND
 // =============================
-const BACKEND_URL = process.env.NEXT_PUBLIC_API_URL;
+// Se não achar env, usa localhost (útil em desenvolvimento)
+const BACKEND_URL =
+  process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
+
+const SOCKET_URL =
+  process.env.NEXT_PUBLIC_SOCKET_URL || "ws://localhost:5000";
+
 
 // Helper para montar querystring
 const qs = (params: Record<string, any>) =>
@@ -61,9 +68,10 @@ export default function FrontendLogistica() {
     setChave(nova);
     if (!stored) localStorage.setItem('chave_carrinho', nova);
 
-    const s = io(BACKEND_URL as string, {
-      transports: ['websocket'],
+    const s = io(SOCKET_URL, {
+    transports: ['websocket'],
     });
+
 
     setSocket(s);
 
