@@ -1,26 +1,26 @@
-'use client';
+"use client";
 
-import { useState, useEffect, useRef } from "react";
-import { io, Socket } from "socket.io-client";
+import { useState, useEffect, useRef } from "react"; 
+import { io, Socket } from "socket.io-client";       
 import { v4 as uuidv4 } from "uuid";
+
 
 // =============================
 // 🔧 CONFIGURAÇÃO DO BACKEND
 // =============================
 // Se não achar env, usa localhost (útil em desenvolvimento)
 const BACKEND_URL =
-  process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
+  process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:5050";
 
 const SOCKET_URL =
-  process.env.NEXT_PUBLIC_SOCKET_URL || "ws://localhost:5000";
-
+  process.env.NEXT_PUBLIC_SOCKET_URL || "http://127.0.0.1:5050";
 
 // Helper para montar querystring
 const qs = (params: Record<string, any>) =>
   Object.entries(params)
-    .filter(([, v]) => v !== undefined && v !== null && v !== '')
+    .filter(([, v]) => v !== undefined && v !== null && v !== "")
     .map(([k, v]) => `${encodeURIComponent(k)}=${encodeURIComponent(String(v))}`)
-    .join('&');
+    .join("&");
 
 interface Movimentacao {
   id?: number;
@@ -44,12 +44,12 @@ export default function FrontendLogistica() {
   const [socket, setSocket] = useState<Socket | null>(null);
   const [conectado, setConectado] = useState(false);
 
-  const [chave, setChave] = useState<string>('');
+  const [chave, setChave] = useState<string>("");
   const chaveInputRef = useRef<HTMLInputElement | null>(null);
 
-  const [filtroId, setFiltroId] = useState('');
-  const [filtroEAN, setFiltroEAN] = useState('');
-  const [filtroMaterial, setFiltroMaterial] = useState('');
+  const [filtroId, setFiltroId] = useState("");
+  const [filtroEAN, setFiltroEAN] = useState("");
+  const [filtroMaterial, setFiltroMaterial] = useState("");
   const [movs, setMovs] = useState<Movimentacao[]>([]);
   const [carregandoMovs, setCarregandoMovs] = useState(false);
 
@@ -62,31 +62,36 @@ export default function FrontendLogistica() {
   const [mensagem, setMensagem] = useState<string | null>(null);
 
   useEffect(() => {
-    const stored = typeof window !== 'undefined' ? localStorage.getItem('chave_carrinho') : null;
+    const stored =
+      typeof window !== "undefined"
+        ? localStorage.getItem("chave_carrinho")
+        : null;
     const nova = stored || uuidv4().slice(0, 8);
     setChave(nova);
-    if (!stored) localStorage.setItem('chave_carrinho', nova);
+    if (!stored) localStorage.setItem("chave_carrinho", nova);
 
     const s = io(SOCKET_URL, {
-    transports: ['websocket'],
+      transports: ["websocket"],
+      secure: true, // ✅ para HTTPS
     });
-
 
     setSocket(s);
 
-    s.on('connect', () => setConectado(true));
-    s.on('disconnect', () => setConectado(false));
+    s.on("connect", () => setConectado(true));
+    s.on("disconnect", () => setConectado(false));
 
-    s.on('carrinho_atualizado', (payload: { chave: string; produtos: Movimentacao[] }) => {
-      if (payload?.chave === (localStorage.getItem('chave_carrinho') || nova)) {
-        setCarrinho(payload.produtos || []);
-        setMensagem('Carrinho atualizado!');
-        setTimeout(() => setMensagem(null), 2000);
+    s.on(
+      "carrinho_atualizado",
+      (payload: { chave: string; produtos: Movimentacao[] }) => {
+        if (payload?.chave === (localStorage.getItem("chave_carrinho") || nova)) {
+          setCarrinho(payload.produtos || []);
+          setMensagem("Carrinho atualizado!");
+          setTimeout(() => setMensagem(null), 2000);
+        }
       }
-    });
-
-    s.on('erro', (payload: { mensagem?: string }) => {
-      setMensagem(payload?.mensagem || 'Erro ao processar ação');
+    );
+     s.on("erro", (payload: { mensagem?: string }) => {
+      setMensagem(payload?.mensagem || "Erro ao processar ação");
       setTimeout(() => setMensagem(null), 3000);
     });
 
@@ -94,7 +99,6 @@ export default function FrontendLogistica() {
       s.disconnect();
     };
   }, []);
-
   const aplicarChave = () => {
     const nova = chaveInputRef.current?.value?.trim();
     if (!nova) return;
